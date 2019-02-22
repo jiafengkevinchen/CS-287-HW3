@@ -1,0 +1,11 @@
+*aux
+*bbl
+*blg
+*log
+*out
+*gz
+*swp
+.DS_Store
+.ipynb_checkpoints/*
+models/__pycache__/*
+models/.ipynb_checkpoints/*

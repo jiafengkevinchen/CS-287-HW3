@@ -1,0 +1,331 @@
+\documentclass[12pt]{article}
+
+% for footnotes
+\makeatletter
+\newcommand\footnoteref[1]{\protected@xdef\@thefnmark{\ref{#1}}\@footnotemark}
+\makeatother
+
+\usepackage{common}
+\usepackage{macros}
+\usepackage{nameref}
+\usepackage{pdflscape}
+
+\title{HW2: Language Modeling}
+\author{Jiafeng Chen \and
+Francisco Rivera}
+\begin{document}
+
+\maketitle{}
+\section{Introduction}
+In this write-up, our main focus is language modeling. That is, given words in a
+sentence, can we predict the word that follows? We implemented a
+\nameref{subsec:trigram}, a embedding neural network model, an
+\nameref{subsec:lstm}, and a few extensions---including pre-trained embeddings,
+ensemble models, and multi-head attention decoders.
+
+\section{Problem Description}
+
+
+To tackle language modeling, we start with sequences of words $w \in \mcV$ in
+some vocabulary $\mcV$ and aim to predict the last word in the sequence which we
+cannot observe. We can do this probabilistically by attempting to estimate,
+\begin{equation}
+p(w_t \mid w_1, \ldots, w_{t-1})
+\label{eq:probabilistic}
+\end{equation}
+that is, the conditional distribution over the last word conditional on the
+words leading up to it.
+
+In particular, there will be a special word, $w_\text{unk} \in \mcV$ which
+represent an unknown word; we use this whenever we encounter a token we have not
+previously seen.
+
+In some models, we represent words with dense embeddings. That is, each word
+gets assigned a vector $\boldv \in \mathbb{R}^d$ where $d$ is the embedding
+dimension. These embeddings are trained as part of the model, but can also be
+initialized to pre-trained values.
+
+\section{Model and Algorithms}
+
+
+\subsection{Trigram model}
+\label{subsec:trigram}
+
+In our trigram model, we aim to estimate the probability written in Equation
+\ref{eq:probabilistic}. This conditional probability is intractable itself
+because it's likely that we've never seen the exact sequence of words $w_1,
+\ldots, w_{t-1}$. However, we can gain tractability by dropping words toward the
+beginning of the sequence, hoping that they don't affect the probability too
+much. That is, we hope that,
+\[ p(w_t \mid w_1, \ldots, w_{t-1}) \stackrel{?}{\approx} p(w_t \mid w_{t-2},
+w_{t-1}).\]
+Having replaced our first probability with a simpler one which conditions on
+less information, we can estimate the latter by its empirical sample estimator.
+In other words, we can take all the times in our training set when we've seen
+words $w_{t-2}, w_{t-1}$ adjacent to each other, and consider the empirical
+distribution of the word that follows them. We represent this sample
+approximation as $\hat{p}$ and write,
+\[ p (w_t \mid w_{t-2}, w_{t-1}) \approx \hat{p} (w_t \mid w_{t-2}, w_{t-1}).\]
+By doing this, we've solved most of the intractability of conditioning on the
+entire sentence $w_1, \ldots, w_{t-1}$, but we still have some of the same
+problems. Namely, it's possible that in our training set, we either haven't seen
+words $w_{t-2}$ and $w_{t-1}$ together before, or we've seen them only a very
+small number of times such that the empirical probability distribution becomes a
+poor approximation. (To avoid division by zero errors, we adopt the convention
+that empirical probabilities are all 0 if we haven't seen the words being
+conditioned on before.) We can fix this by also considering the probabilities,
+\[ p(w_t) \text{ and } p(w_t \mid w_{t-1})\]
+which give us the unconditional probability of a word and the probability
+conditional on only the previous word. These have the benefit of being more
+tractable to estimate and the drawback of losing information. In the end, we
+calculate a blend of these three approximations:
+\[ \alpha_1 \hat{p}(w_t \mid w_{t-2}, w_{t-1}) + \alpha_2
+\hat{p}(w_t \mid w_{t-1}) + (1-\alpha_1-\alpha_2)\hat{p}(w_t).\]
+Training the weights $(\alpha_1, \alpha_2)$ loads up most of our weight on
+$\alpha_1$ which suggests the latter two probabilities are better used as
+``tie-breakers'' when conditioning on the previous bi-gram yields a small number
+of possibilities. In our final model, we use $(\alpha_1, \alpha_2) = (0.9,
+0.05)$.
+
+We conclude this section with discussion on implementation. In particular, one
+easy way to keep track of all the conditional probabilities would be to keep a
+three dimensional $|\mcV| \times |\mcV| \times |\mcV|$ tensor which keeps track
+of the trigram counts. However, vocabulary size is large, and this data
+structure can get prohibitively large very quickly. Moreover, we don't expect
+most trigrams to have any counts. Therefore, we use a sparse tensor to store
+these counts which reduces our memory usage to the number of distinct trigrams
+in the training dataset.
+
+\subsection{Neural Network Language Model}
+\label{sub:nnlm}
+Following \cite{bengio2003neural}, we implement a neural network language model
+(NNLM). We model \eqref{eq:probabilistic} by first assuming limited dependence: \[
+p(w_i \mid w_1,\ldots,w_{i-1}) = p(w_i \mid w_{i-1}, \ldots, w_{i-k}),
+\]
+i.e., the current word only depends on the past $k$ words, a useful restriction
+motivated by n-gram models. Next, we convert input tokens $w_{i-1},\ldots,w_
+{i-k}$ into embedding vectors $\br{\boldv_{i-t}}_{t=1}^k$ and concatenate them
+into a $dk$ vector $\bm v_{i-k:i-1}$. We then pass this vector into a
+multilayer perceptron network with a softmax output into $|\mathcal V|$ classes.
+We implement this efficiently across a batch by using a convolution operation,
+since convolution acts like a moving window of size $k$. This way we can
+generate $T - k + 1$ predictions for a sentence of length $T$. We depict the
+convolution trick in \Cref{fig:nnlm}.
+
+\begin{figure}[tb]
+    \centering
+    \includegraphics[width=.7\textwidth]{figs/nnlang.png}
+    \caption{Diagram for \nameref{sub:nnlm}}
+    \label{fig:nnlm}
+\end{figure}
+
+\subsection{LSTM}
+\label{subsec:lstm}
+
+A concern with our trigram model is that it completely ignores words more than
+two positions before the word we wish to predict. To the extent we believe these
+words are predictive (personal experience with language suggest that they should
+be!), the trigram model has an inherent limitation in its ability to model that
+dependence.
+
+One way to combat this is with an LSTM, the architecture of which is depicted in
+\cref{fig:lstmdiagram}. At a high level, the LSTM functions by keeping track of
+three vectors: $v_t, C_t,$ and $h_t$. The first of these vectors is simply a
+dense embedding for the word $w_t$. The $h_t$ and $C_t$ vectors are state
+representations of the model, which are dependent on previous words and give the
+model a ``memory.'' The LSTM can thus theoretically condition on all previous
+text, and in practice exhibits long-term memory through its architecture on
+$C_t$ which encourages only intentional changes over time.
+
+The LSTM is formally characterized by the following equations which determine
+the evolution of these vectors,
+
+\begin{align}
+f_t &= \sigma(W_f \cdot [h_{t-1}, x_t] + b_f) \\
+i_t &= \sigma(W_i \cdot [h_{t-1}, x_t] + b_i) \\
+\tilde C_t &= \tanh(W_c \cdot [h_{t-1}, x_t] + b_c) \\
+C_t &= f_t \odot C_{t-1} + i_t \odot \tilde C_t \\
+o_t &= \sigma(W_o [h_{t-1}, x_t] + b_o) \\
+h_t &= o_t \odot \tanh(C_t)
+\end{align}
+
+Roughly speaking, their intuitions are as follows: $\tilde C_t$ represents the
+new information that might be relevant for encoding into long-term memory. $f_t$
+captures the information that needs to be deleted from long-term memory, and
+$i_t$ captures the places where information needs to be added. Then, these are
+combined to determine the new $C_t$. The hidden state roughly captures a
+filtered version (captured by the multiplication with $o_t$) of the cell-state.
+
+\begin{figure}[htb]
+\centering
+\includegraphics[width=\textwidth]{figs/lstm-diagram.png}
+\caption{Depiction of LSTM inner-workings \citep{olah2015understanding}}
+\label{fig:lstmdiagram}
+\end{figure}
+
+When creating an LSTM, we have two main hyper-parameters to decide on, the
+embedding dimension and the hidden dimension. We experiment with various choices
+for these hyper-parameters, finding that 300 for both maximizes our performance
+on the validation set using early-stopping as a regularization technique when we
+train.
+
+\subsection{Multi-head Attention}
+\label{sub:attn}
+
+Following \cite{vaswani2017attention}, we implement a variant of the multi-head
+attention
+decoder network. Instead of passing the last hidden state from an LSTM $h_t$ to
+predict $h_{t+1}$, we use a concatenation of $h_t$ and a \emph{context vector}
+$c_t = a_1 h_1 + \cdots + a_{t-1} h_{t-1}$ for \emph{attention values}
+$a_1,\ldots, a_{t-1}$ residing in the unit simplex. Following
+\cite{vaswani2017attention}, we use the \emph{scaled attention} mechanism,
+where \[
+\bm a = \softmax\pr{\br{\frac{h_i^T h_t}{\sqrt{\dim(h_t)}}}_{i=1}^{t-1}}.
+\]
+In \emph{multi-head attention}, we repeat the attention mechanism above on
+different linear projections of $h_1,\ldots,h_t$, with the motivation being that
+we wish to capture similarity on different projections of words---one attention
+layer could be capturing grammar, another semantics, a third pronoun
+association, etc. We depict the architecture in \Cref{fig:attn}, for $t=3$ and
+predicting $t+1$.
+\begin{figure}[tb]
+    \centering
+    \includegraphics[width=\textwidth]{figs/attention.png}
+    \caption{Diagram for \nameref{sub:attn}. In this diagram, we predict the
+    fourth word in the sentence by conditioning on the first three. We compute
+    attention values of $h_3$ with $h_2$ and $h_1$ and concatenate $h_3$ with a
+    context vector $a_1 h_1 + a_2 h_2$, where $a_i$ are the attention values.
+    We pass the resulting vector through a linear transformation and softmax
+    output. In multi-head attention, we repeat the process for different
+    projections of $h_1,h_2,h_3$ and concatenate the results.}
+    \label{fig:attn}
+\end{figure}
+
+Certain computational tricks need to be employed for efficient utilization of
+the GPU. Unlike the encoding attention network, the decoder cannot condition on
+future information when predicting the future. As a result, each attention layer
+can only look at past hidden states. We parallelize the procedure and take
+advantage of GPU hardware by applying attention as usual, computing every
+inner product $h_i^T h_j$ for all $i,j$, and use a mask that sets entries with
+$h_i^T h_j$
+to $-\infty$ if $j \le i$ (which correspond to the forbidden attention
+links by looking ahead) before applying the softmax.
+
+\section{Experiments}
+We train a few models and document hyperparameters in \Cref{tab:spec}. Results
+are displayed in \Cref{table:performance}. 
+
+For a simple model with only three undetermined parameters,\footnote{Of course,
+the training data is being memorized to make for a much larger model complexity,
+but there is only one canonical way to do this.} tri-grams performs
+well on MAP@20, but not well on perplexity. We conjecture that this is because training set sentences are not
+very long, so that most of the information is captured by the immediate
+predecessors of the word; to the trigrams model, all n-grams it doesn't see are impossible, and this might 
+limit its performance on the cross entropy metric. Of course, in the limit, in a sentence with only three words,
+a trigram model conditions on all the information.
+
+% TODO: confirm this is empirically accurate
+The NNLM appears to underperform the trigram model by a bit on MAP@20, even when we
+condition on the past seven words rather than the past two. 
+We believe the
+network architecture is not flexible enough to efficiently learn the regression
+function without significantly overfitting on a relatively small data set.
+
+LSTMs out-perform the previous two models, which we attribute to their ability
+to not only condition on local information (as do the previous models) but also
+on longer dependences. Unlike an NNLM where if we increase the window we look
+at, the model becomes too prone to overfitting, the LSTM architecture encourages
+``memorizing'' only relevant features that get mostly propagated through the
+long-term memory ``high-way.'' We also discover that initializing word
+embeddings to pre-trained values increases performance by 10 perplexity
+points---something we attribute to the pre-trained word embeddings capturing
+deeper relationships before we start training, and training reinforcing the
+useful ones which it might not have discovered had it been randomly initialized.
+
+Of the pre-trained embeddings, we find most success with word2vec. However, we
+find that different embeddings result in different model predictions. This
+suggests an ensemble model where we combine the predictions of LSTMs initialized
+to different embeddings. Such an ensemble gives us further predictive power.
+
+Lastly, we experimented with attention as in \cite{vaswani2017attention}.
+However, unlike in \cite{vaswani2017attention}, who only used attention layers,
+we used attention on RNN outputs, consistent with the literature on attention
+before \cite{vaswani2017attention}. The attention network did not work as well
+as we hoped. We conjecture that the underperformance of attention is
+attributable to low amounts of data and short sentences. Attention's strength is
+to capture long-range dependencies globally, but as a decoder, we can only look
+back and look at a few words in the past---since the sentences are short.
+
+\begin{landscape}
+\begin{table}[tb]
+    
+    \centering
+\begin{tabular}{ll}
+\toprule
+model name                   &specifications\\
+\midrule
+\texttt{attention\_300.200.0.1dropout} & Multi-head attention (3 heads), 300 embedding, 200 hidden, 0.1 dropout on linear transform\\
+ensemble                     & Ensembling (equal weights) all LSTM/attention based models\\
+\texttt{lstm\_charngram.100d }         & 100 embedding, 100 hidden, initiate to charngram \\
+\texttt{lstm\_fasttext.en.300d }       & 300 embedding, 300 hidden, initiate to fasttext \\
+\texttt{lstm\_glove.42B.300d    }      & 300 embedding, 300 hidden, initiate to GloVe-42B \\
+\texttt{lstm\_glove.twitter.27B.200d}  & 200 embedding, 200 hidden, initiate to GloVe-Twitter \\
+\texttt{lstm\_word2vec.300d         }  & 300 embedding, 300 hidden, initiate to word2vec \\
+\texttt{nnlang.300.7.300            } & NNLM, 300 embedding, 300 hidden, $k=7$\\
+Trigram & $\alpha_1 = 0.05 = \alpha_2$, $\alpha_3 = 0.9$\\
+\bottomrule
+\end{tabular}
+    \caption{Hyperparameter specifications for models that we train. All LSTM
+    models are one-layer (we experimented with two layers and dropout, but did
+    not achieve gains; this is consistent with the literature on LSTM and Penn tree bank dataset). All models are trained with Adam and learning rate
+    $10^{-3}$ over 3 epochs (which is usually when validation error starts to
+    increase). The trigram probabilities are somewhat arbitrarily chosen: We
+    initially trained the trigram weights over the training set and observe
+    that the gradient direction is always in the direction of increasing the
+    weight for the trigram term, $\alpha_3$; we then decided to use a $0.9,
+    0.05,0.05$ split, putting most weight on trigrams.}
+    \label{tab:spec}
+\end{table}
+\end{landscape}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lrrr}
+\toprule
+{}                                     & Loss  & MAP@20 & Perplexity \\
+model name                             &       &        & \\
+\midrule
+\texttt{ensemble}                      & 4.656 & 0.350  & 105.248 \\
+\texttt{attention\_300.200.0.1dropout} & 4.977 & 0.328  & 145.081 \\
+\texttt{lstm\_charngram.100d}          & 4.931 & 0.329  & 138.500 \\
+\texttt{lstm\_fasttext.en.300d}        & 4.896 & 0.328  & 133.750 \\
+\texttt{lstm\_glove.42B.300d}          & 4.879 & 0.331  & 131.564 \\
+\texttt{lstm\_glove.twitter.27B.200d}  & 4.917 & 0.331  & 136.595 \\
+\texttt{lstm\_word2vec.300d}           & 4.862 & 0.332  & 129.220 \\
+\texttt{nnlang.300.7.300}              & 5.691 & 0.254  & 296.330 \\
+\texttt{trigram} & 5.714 & 0.306 & 303.138\\
+\bottomrule
+\end{tabular}
+\caption{Performance metrics for different models}
+\label{table:performance}
+\end{table}
+
+\section{Conclusion}
+
+
+\bibliographystyle{apalike}
+\bibliography{writeup}
+
+\appendix
+\section{Model implementation}
+
+\lstinputlisting[caption=Trigram model implementation]{models/trigram.py}
+\lstinputlisting[caption=NNLM]{models/neural_net_lang.py}
+\lstinputlisting[caption=LSTM]{models/lstm.py}
+\lstinputlisting[caption=LSTM-attention]{models/lstm_att.py}
+\lstinputlisting[caption=Ensemble]{models/ensemble.py}
+
+
+
+
+\end{document}
