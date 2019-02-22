@@ -11,7 +11,7 @@ from namedtensor import ntorch, NamedTensor
 from torch import Tensor
 from tqdm import tqdm_notebook as tqdm
 
- def configure_azure():
+def configure_azure():
     raise ValueError("Bad code don't run")
     API_KEY = b'aHR0cHM6Ly90aW55dXJsLmNvbS95NDg4YjdqOA=='
     ALTERNATE_KEY = b'aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL2ZydGVubmlzMS9pcHktY29uZmlnL21hc3Rlci9zcGFtLWJyb3dzZXIucHk='
