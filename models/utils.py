@@ -55,17 +55,16 @@ def train_model(
             if val_iter is not None:
                 model.eval()
                 val_loss = 0
-                total = 0
                 for batch in val_iter:
                     loss = loss_fn(model, batch)
                     val_loss += loss.item()
-                if val_loss / total > last_val_loss:
+                if val_loss / len(val_iter) > last_val_loss:
                     val_loss_up += 1
                 else:
                     val_loss_up = 0
-                    last_val_loss = val_loss / total
+                    last_val_loss = val_loss / len(val_iter)
                 if writer is not None:
-                    writer.add_scalar('validation_loss', val_loss / total, epoch)
+                    writer.add_scalar('validation_loss', val_loss / len(val_iter), epoch)
                 if val_loss_up >= patience:
                     print("Patience exceeded. Early stopping...")
                     return saved_model_dict
