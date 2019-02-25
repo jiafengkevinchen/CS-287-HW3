@@ -6,6 +6,6 @@ class Seq2Seq(nnn.Module):
         super().__init__()
         self.encoder = encoder
         self.decoder = decoder
-    def forward(self, src):
+    def forward(self, src, tgt):
         encoded = self.encoder(src)
-        return self.decoder(encoded)
+        return self.decoder(encoded, tgt)
