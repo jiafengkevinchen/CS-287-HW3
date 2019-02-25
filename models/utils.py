@@ -53,7 +53,7 @@ def train_model(
                 num_batches += 1
                 train_loss_write += loss.item()
 
-                if num_batches % report_frequency == 0:
+                if num_batches % report_frequency == 0 and writer is not None:
                     if writer is not None:
                         writer.add_scalar(
                             'training_loss',
@@ -68,19 +68,28 @@ def train_model(
                         for batch in val_iter:
                             loss = loss_fn(model, batch)
                             val_loss += loss.item()
-                        if val_loss / len(val_iter) > last_val_loss:
-                            val_loss_up += 1
-                        else:
-                            val_loss_up = 0
-                            last_val_loss = val_loss / len(val_iter)
+                        model.train()
                         if writer is not None:
                             writer.add_scalar(
                                 'validation_loss', val_loss / len(val_iter),
                                 num_batches // report_frequency)
-                        if val_loss_up >= patience:
-                            print("Patience exceeded. Early stopping...")
-                            return saved_model_dict
-                        model.train()
+
+            # End of batch validation
+            if val_iter is not None:
+                model.eval()
+                val_loss = 0
+                for batch in val_iter:
+                    loss = loss_fn(model, batch)
+                    val_loss += loss.item()
+                model.train()
+                if val_loss / len(val_iter) > last_val_loss:
+                    val_loss_up += 1
+                else:
+                    val_loss_up = 0
+                    last_val_loss = val_loss / len(val_iter)
+                if val_loss_up >= patience:
+                    print("Patience exceeded. Early stopping...")
+                    return saved_model_dict
             if callback is not None:
                 callback(**locals())
 
