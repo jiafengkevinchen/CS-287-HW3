@@ -5,6 +5,7 @@ import torch
 import subprocess
 import pandas as pd
 import numpy as np
+# from copy import deepcopy
 
 
 from IPython.paths import get_ipython_dir
@@ -17,7 +18,7 @@ from tqdm import tqdm_notebook as tqdm
 def train_model(
     model, loss_fn=None, optimizer=None, train_iter=None,
     val_iter=None, num_epochs=5, writer=None, callback=None,
-    inner_callback=None, progress_bar=False):
+    inner_callback=None, progress_bar=False, patience=1):
     """
     TODO
     """
@@ -27,6 +28,8 @@ def train_model(
     elif loss_fn is None or optimizer is None:
         raise ValueError
     else:
+        val_loss_up = 0
+        last_val_loss = np.inf
         for epoch in range(num_epochs):
             model.train()
             train_loss = 0
@@ -48,7 +51,7 @@ def train_model(
             if writer is not None:
                 writer.add_scalar('training_loss', train_loss / total, epoch)
 
-
+            saved_model_dict = model.state_dict()
             if val_iter is not None:
                 model.eval()
                 val_loss = 0
@@ -56,8 +59,14 @@ def train_model(
                 for batch in val_iter:
                     loss = loss_fn(model, batch)
                     val_loss += loss.item()
+                if val_loss / total > last_val_loss:
+                    val_loss_up += 1
+
                 if writer is not None:
                     writer.add_scalar('validation_loss', val_loss / total, epoch)
+                if val_loss_up >= patience:
+                    print("Patience exceeded. Early stopping...")
+                    return saved_model_dict
             if callback is not None:
                 callback(**locals())
 
