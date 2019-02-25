@@ -59,6 +59,7 @@ def train_model(
                             'training_loss',
                             train_loss_write / report_frequency,
                             num_batches // report_frequency)
+                        train_loss_write = 0
 
                     saved_model_dict = model.state_dict()
                     if val_iter is not None:
@@ -73,13 +74,15 @@ def train_model(
                             val_loss_up = 0
                             last_val_loss = val_loss / len(val_iter)
                         if writer is not None:
-                            writer.add_scalar('validation_loss', val_loss / len(val_iter), epoch)
+                            writer.add_scalar(
+                                'validation_loss', val_loss / len(val_iter),
+                                num_batches // report_frequency)
                         if val_loss_up >= patience:
                             print("Patience exceeded. Early stopping...")
                             return saved_model_dict
                         model.train()
-                    if callback is not None:
-                        callback(**locals())
+            if callback is not None:
+                callback(**locals())
 
 
 
