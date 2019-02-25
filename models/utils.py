@@ -4,6 +4,8 @@ import base64
 import torch
 import subprocess
 import pandas as pd
+import numpy as np
+
 
 from IPython.paths import get_ipython_dir
 from urllib.request import urlretrieve
@@ -25,6 +27,7 @@ def train_model(
     elif loss_fn is None or optimizer is None:
         raise ValueError
     else:
+        model.train()
         for epoch in range(num_epochs):
             train_loss = 0
             total = 0
@@ -44,7 +47,10 @@ def train_model(
                     inner_callback(**locals())
             if writer is not None:
                 writer.add_scalar('training_loss', train_loss / total, epoch)
+
+
             if val_iter is not None:
+                model.eval()
                 val_loss = 0
                 total = 0
                 for batch in val_iter:

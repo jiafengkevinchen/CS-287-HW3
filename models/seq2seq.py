@@ -9,3 +9,10 @@ class Seq2Seq(nnn.Module):
     def forward(self, src, trg):
         encoded = self.encoder(src)
         return self.decoder(encoded, trg)
+
+
+ce_loss = nnn.CrossEntropyLoss().spec("classes")
+
+def seq2seq_loss_fn(model, batch):
+    out = model(batch.src, batch.trg)
+    return ce_loss(out, batch.trg)
