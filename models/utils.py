@@ -33,7 +33,6 @@ def train_model(
         for epoch in range(num_epochs):
             model.train()
             train_loss = 0
-            total = 0
             if not progress_bar:
                 tqdm = lambda x : x
             else:
@@ -45,11 +44,10 @@ def train_model(
                 optimizer.step()
                 train_loss += loss.item()
 
-                total += batch.batch_size
                 if inner_callback is not None:
                     inner_callback(**locals())
             if writer is not None:
-                writer.add_scalar('training_loss', train_loss / total, epoch)
+                writer.add_scalar('training_loss', train_loss / len(train_iter), epoch)
 
             saved_model_dict = model.state_dict()
             if val_iter is not None:

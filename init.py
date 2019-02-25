@@ -8,6 +8,12 @@ from namedtensor.nn import nn as nnn
 from torch import nn
 from namedtensor.text import NamedField
 
+
+from tensorboardcolab import TensorBoardColab
+from tensorboardX import SummaryWriter
+tbc = TensorBoardColab()
+writer = SummaryWriter(log_dir=tbc.get_writer().get_logdir())
+
 import spacy
 spacy_de = spacy.load('de')
 spacy_en = spacy.load('en')
@@ -58,3 +64,4 @@ batch = next(iter(train_iter))
 
 def escape(l):
     return l.replace("\"", "<quote>").replace(",", "<comma>")
+
