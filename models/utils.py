@@ -27,8 +27,8 @@ def train_model(
     elif loss_fn is None or optimizer is None:
         raise ValueError
     else:
-        model.train()
         for epoch in range(num_epochs):
+            model.train()
             train_loss = 0
             total = 0
             if not progress_bar:
