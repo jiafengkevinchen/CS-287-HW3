@@ -61,7 +61,9 @@ def train_model(
                     val_loss += loss.item()
                 if val_loss / total > last_val_loss:
                     val_loss_up += 1
-
+                else:
+                    val_loss_up = 0
+                    last_val_loss = val_loss / total
                 if writer is not None:
                     writer.add_scalar('validation_loss', val_loss / total, epoch)
                 if val_loss_up >= patience:
