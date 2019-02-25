@@ -19,7 +19,7 @@ class LSTMEncoder(nnn.Module):
                              hidden_size=hidden_dim,
                              num_layers=num_layers,
                              dropout=dropout) \
-                        .spec("embedding", "srcSeqlen", name_out="hidden")
+                        .spec("embedding", "srcSeqlen")
 
     def forward(self, batch_text):
         embedded = self.embed(batch_text)
