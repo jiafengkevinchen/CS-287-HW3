@@ -19,7 +19,7 @@ class LSTMDecoder(nnn.Module):
                              hidden_size=hidden_dim,
                              num_layers=num_layers,
                              dropout=dropout) \
-                        .spec("embedding", "tgtSeqlen")
+                        .spec("embedding", "trgSeqlen")
 
         self.w = nnn.Linear(in_features=hidden_dim,
                             out_features=len(TEXT.vocab)) \
