@@ -5,7 +5,6 @@ import torch
 import subprocess
 import pandas as pd
 import numpy as np
-# from copy import deepcopy
 
 
 from IPython.paths import get_ipython_dir
@@ -30,69 +29,74 @@ def train_model(
     else:
         num_batches = 0
         train_loss_write = 0
-
         val_loss_up = 0
+        best_model_dict = model.state_dict()
+
         last_val_loss = np.inf
-        for epoch in range(num_epochs):
-            train_loss = 0
-            if not progress_bar:
-                tqdm = lambda x : x
-            else:
-                from tqdm import tqdm_notebook as tqdm
-            for batch in tqdm(train_iter):
-                optimizer.zero_grad()
-                loss = loss_fn(model, batch)
-                loss.backward()
-                optimizer.step()
-                train_loss += loss.item()
+        try:
+            for epoch in range(num_epochs):
+                train_loss = 0
+                if not progress_bar:
+                    tqdm = lambda x : x
+                else:
+                    from tqdm import tqdm_notebook as tqdm
+                for batch in tqdm(train_iter):
+                    optimizer.zero_grad()
+                    loss = loss_fn(model, batch)
+                    loss.backward()
+                    optimizer.step()
+                    train_loss += loss.item()
 
-                if inner_callback is not None:
-                    inner_callback(**locals())
+                    if inner_callback is not None:
+                        inner_callback(**locals())
 
 
-                num_batches += 1
-                train_loss_write += loss.item()
+                    num_batches += 1
+                    train_loss_write += loss.item()
 
-                if num_batches % report_frequency == 0 and writer is not None:
-                    if writer is not None:
-                        writer.add_scalar(
-                            'training_loss',
-                            train_loss_write / report_frequency,
-                            num_batches // report_frequency)
-                        train_loss_write = 0
-
-                    saved_model_dict = model.state_dict()
-                    if val_iter is not None:
-                        model.eval()
-                        val_loss = 0
-                        for batch in val_iter:
-                            loss = loss_fn(model, batch)
-                            val_loss += loss.item()
-                        model.train()
+                    if num_batches % report_frequency == 0 and writer is not None:
                         if writer is not None:
                             writer.add_scalar(
-                                'validation_loss', val_loss / len(val_iter),
+                                'training_loss',
+                                train_loss_write / report_frequency,
                                 num_batches // report_frequency)
+                            train_loss_write = 0
 
-            # End of batch validation
-            if val_iter is not None:
-                model.eval()
-                val_loss = 0
-                for batch in val_iter:
-                    loss = loss_fn(model, batch)
-                    val_loss += loss.item()
-                model.train()
-                if val_loss / len(val_iter) > last_val_loss:
-                    val_loss_up += 1
-                else:
-                    val_loss_up = 0
-                    last_val_loss = val_loss / len(val_iter)
-                if val_loss_up >= patience:
-                    print("Patience exceeded. Early stopping...")
-                    return saved_model_dict
-            if callback is not None:
-                callback(**locals())
 
+                        if val_iter is not None:
+                            model.eval()
+                            val_loss = 0
+                            for batch in val_iter:
+                                loss = loss_fn(model, batch)
+                                val_loss += loss.item()
+                            model.train()
+                            if writer is not None:
+                                writer.add_scalar(
+                                    'validation_loss', val_loss / len(val_iter),
+                                    num_batches // report_frequency)
+
+                # End of epoch validation
+                if val_iter is not None:
+                    model.eval()
+                    val_loss = 0
+                    for batch in val_iter:
+                        loss = loss_fn(model, batch)
+                        val_loss += loss.item()
+                    model.train()
+                    if val_loss / len(val_iter) > last_val_loss:
+                        val_loss_up += 1
+                    else:
+                        val_loss_up = 0
+                        best_model_dict = model.state_dict()
+                        last_val_loss = val_loss / len(val_iter)
+                    if val_loss_up >= patience:
+                        print("Patience exceeded. Early stopping...")
+                        return best_model_dict
+                if callback is not None:
+                    callback(**locals())
+        except KeyboardInterrupt:
+            print("Don't interrupt me! Fine. Here's your model.")
+            return best_model_dict
 
 
 def tensor_to_text(t, TEXT):

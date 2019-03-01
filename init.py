@@ -8,11 +8,12 @@ from namedtensor.nn import nn as nnn
 from torch import nn
 from namedtensor.text import NamedField
 
-
-from tensorboardcolab import TensorBoardColab
-from tensorboardX import SummaryWriter
-tbc = TensorBoardColab()
-writer = SummaryWriter(log_dir=tbc.get_writer().get_logdir())
+import getpass
+if getpass.getuser() not in ['franciscorivera', 'jiafengchen', 'yufeng.ling']:
+    from tensorboardcolab import TensorBoardColab
+    from tensorboardX import SummaryWriter
+    tbc = TensorBoardColab()
+    writer = SummaryWriter(log_dir=tbc.get_writer().get_logdir())
 
 import spacy
 spacy_de = spacy.load('de')
