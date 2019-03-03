@@ -49,29 +49,40 @@ class LSTMDecoderAttn(nnn.Module):
                                    padding_idx=pad_idx)
 
         self.lstm = nnn.LSTM(input_size=embedding_dim + 2 * hidden_dim,
-                             hidden_size=hidden_dim,
+                             hidden_size=hidden_dim * 2,
                              num_layers=num_layers,
                              dropout=dropout) \
                         .spec("embedding", "trgSeqlen")
-
-        self.w = nnn.Linear(in_features=hidden_dim,
+        
+        self.w = nnn.Linear(in_features=hidden_dim * 2,
                             out_features=len(TEXT.vocab)) \
                         .spec("embedding", "classes")
 
 
     def forward(self, init_state, batch_text):
+        log_probs = None
         embedded = self.embed(batch_text)
-        decoder_states = [ntorch.zeros(init_state.shape["embedding"], 
-                                       names=("hidden")).to(device)]
-        log_probs = []
-        for i in range(embedded.shape["trgSeqlen"]):
-            last_hidden = decoder_states[-1]
-            context = init_state.dot("hidden", last_hidden).softmax("srcSeqlen") \
+        first_input = ntorch.cat([embedded[{"trgSeqlen": slice(0, 1)}],
+                                  ntorch.ones((1, init_state.shape["batch"],
+                                               init_state.shape["embedding"]),
+                                              names=("trgSeqlen", "batch", "embedding")).to(device)],
+                                 "embedding")
+        output, (hn, cn) = self.lstm(first_input)
+        hidden_states = [(hn, cn)]
+        for i in range(1, embedded.shape["trgSeqlen"]):
+            last_hidden = hidden_states[-1]
+            context = init_state.dot("embedding", last_hidden[0].squeeze("layers")) \
+                                .softmax("srcSeqlen") \
                                 .dot("srcSeqlen", init_state)
-            curr_word = embedded[{"trgSeqlen": i}]
-            rnn_input = ntorch.cat((curr_word, context), "embedding")
-            output, hidden = self.lstm(rnn_input, last_hidden)
-            decoder_states.append(hidden)
-            log_probs = ntorch.cat((log_probs, self.w(output)), 2)
+            context = NamedTensor(context.values.unsqueeze(-1),
+                                  names=(*context.shape.keys(), 'trgSeqlen'))
+            curr_word = embedded[{"trgSeqlen": slice(i - 1, i)}]
+            lstm_input = ntorch.cat([curr_word, context], "embedding")
+            output, (hn, cn) = self.lstm(lstm_input, last_hidden)
+            hidden_states.append((hn, cn))
+            if log_probs is None:
+                log_probs = self.w(output)
+            else:
+                log_probs = ntorch.cat([log_probs, self.w(output)], "trgSeqlen")
         
         return log_probs
