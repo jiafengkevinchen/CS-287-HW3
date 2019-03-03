@@ -61,16 +61,17 @@ class LSTMDecoderAttn(nnn.Module):
 
     def forward(self, init_state, batch_text):
         embedded = self.embed(batch_text)
-        decoder_states = [ntorch.zeros(self.embedding_dim, names=("hidden"))]
+        decoder_states = [ntorch.zeros(init_state.shape["embedding"], 
+                                       names=("hidden")).to(device)]
         log_probs = []
-        for i in range(1, init_state.shape["srcSeqlen"]):
+        for i in range(embedded.shape["trgSeqlen"]):
             last_hidden = decoder_states[-1]
             context = init_state.dot("hidden", last_hidden).softmax("srcSeqlen") \
                                 .dot("srcSeqlen", init_state)
-            curr_word = embedded.slice(i)
-            rnn_input = torch.cat((curr_word, context), 2)
+            curr_word = embedded[{"trgSeqlen": i}]
+            rnn_input = ntorch.cat((curr_word, context), "embedding")
             output, hidden = self.lstm(rnn_input, last_hidden)
             decoder_states.append(hidden)
-            log_probs = torch.cat((log_probs, self.w(output)), 2)
+            log_probs = ntorch.cat((log_probs, self.w(output)), 2)
         
         return log_probs
