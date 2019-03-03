@@ -17,7 +17,7 @@ from tqdm import tqdm_notebook as tqdm
 def train_model(
     model, loss_fn=None, optimizer=None, train_iter=None,
     val_iter=None, num_epochs=5, report_frequency=100, writer=None, callback=None,
-    inner_callback=None, progress_bar=False, patience=1):
+    inner_callback=None, progress_bar=False, patience=1, run_name="model"):
     """
     TODO
     """
@@ -56,8 +56,7 @@ def train_model(
 
                     if num_batches % report_frequency == 0 and writer is not None:
                         if writer is not None:
-                            writer.add_scalar(
-                                'training_loss',
+                            writer.add_scalar(f"{run_name}/training_loss",
                                 train_loss_write / report_frequency,
                                 num_batches // report_frequency)
                             train_loss_write = 0
@@ -72,7 +71,7 @@ def train_model(
                             model.train()
                             if writer is not None:
                                 writer.add_scalar(
-                                    'validation_loss', val_loss / len(val_iter),
+                                    f'{run_name}/validation_loss', val_loss / len(val_iter),
                                     num_batches // report_frequency)
 
                 # End of epoch validation
@@ -97,6 +96,7 @@ def train_model(
         except KeyboardInterrupt:
             print("Don't interrupt me! Fine. Here's your model.")
             return best_model_dict
+        return best_model_dict
 
 
 def tensor_to_text(t, TEXT):
