@@ -6,7 +6,8 @@ class LSTMEncoder(nnn.Module):
                  embedding_dim=100,
                  hidden_dim=150,
                  num_layers=1,
-                 dropout=0):
+                 dropout=0,
+                 bidirectional=False):
         super().__init__()
 
         pad_idx = TEXT.vocab.stoi['<pad>']
@@ -18,7 +19,8 @@ class LSTMEncoder(nnn.Module):
         self.lstm = nnn.LSTM(input_size=embedding_dim,
                              hidden_size=hidden_dim,
                              num_layers=num_layers,
-                             dropout=dropout) \
+                             dropout=dropout,
+                             bidirectional=bidirectional) \
                         .spec("embedding", "srcSeqlen")
 
     def forward(self, batch_text):
