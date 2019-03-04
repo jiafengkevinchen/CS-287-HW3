@@ -1,6 +1,10 @@
+import torch
 from torch import nn
 from namedtensor import ntorch
 from namedtensor.nn import nn as nnn
+
+
+device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
 class LSTMDecoder(nnn.Module):
     def __init__(self, TEXT,
