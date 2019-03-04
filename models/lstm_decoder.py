@@ -1,6 +1,6 @@
 import torch
 from torch import nn
-from namedtensor import ntorch
+from namedtensor import ntorch, NamedTensor
 from namedtensor.nn import nn as nnn
 
 
