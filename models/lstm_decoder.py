@@ -62,6 +62,8 @@ class LSTMDecoderAttn(nnn.Module):
                             out_features=len(TEXT.vocab)) \
                         .spec("embedding", "classes")
 
+        self.attention = []
+
 
     def forward(self, init_state, batch_text):
         log_probs = None
@@ -75,9 +77,10 @@ class LSTMDecoderAttn(nnn.Module):
         hidden_states = [(hn, cn)]
         for i in range(1, embedded.shape["trgSeqlen"]):
             last_hidden = hidden_states[-1]
-            context = init_state.dot("embedding", last_hidden[0].squeeze("layers")) \
-                                .softmax("srcSeqlen") \
-                                .dot("srcSeqlen", init_state)
+            attention = init_state.dot("embedding", last_hidden[0].squeeze("layers")) \
+                                  .softmax("srcSeqlen")
+            self.attention.append(attention)
+            context = attention.dot("srcSeqlen", init_state)
             context = NamedTensor(context.values.unsqueeze(-1),
                                   names=(*context.shape.keys(), 'trgSeqlen'))
             curr_word = embedded[{"trgSeqlen": slice(i - 1, i)}]
