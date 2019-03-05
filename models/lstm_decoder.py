@@ -82,7 +82,7 @@ class LSTMDecoderAttn(nnn.Module):
             context = attention.dot("srcSeqlen", init_state)
             context = NamedTensor(context.values.unsqueeze(-1),
                                   names=(*context.shape.keys(), 'trgSeqlen'))
-            curr_word = embedded[{"trgSeqlen": slice(i, i + 1)}]
+            curr_word = embedded[{"trgSeqlen": slice(i - 1, i)}]
             lstm_input = ntorch.cat([curr_word, context], "embedding")
             output, (hn, cn) = self.lstm(lstm_input, last_hidden)
             hidden_states.append((hn, cn))
