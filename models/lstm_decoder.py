@@ -3,7 +3,6 @@ from torch import nn
 from namedtensor import ntorch, NamedTensor
 from namedtensor.nn import nn as nnn
 
-
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
 class LSTMDecoder(nnn.Module):
@@ -83,7 +82,7 @@ class LSTMDecoderAttn(nnn.Module):
             context = attention.dot("srcSeqlen", init_state)
             context = NamedTensor(context.values.unsqueeze(-1),
                                   names=(*context.shape.keys(), 'trgSeqlen'))
-            curr_word = embedded[{"trgSeqlen": slice(i - 1, i)}]
+            curr_word = embedded[{"trgSeqlen": slice(i, i + 1)}]
             lstm_input = ntorch.cat([curr_word, context], "embedding")
             output, (hn, cn) = self.lstm(lstm_input, last_hidden)
             hidden_states.append((hn, cn))
