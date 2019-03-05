@@ -65,16 +65,15 @@ class LSTMDecoderAttn(nnn.Module):
 
 
     def forward(self, init_state, batch_text):
-        log_probs = None
         embedded = self.embed(batch_text)
         first_input = ntorch.cat([embedded[{"trgSeqlen": slice(0, 1)}],
-                                  ntorch.ones((1, init_state.shape["batch"],
-                                               init_state.shape["embedding"]),
-                                              names=("trgSeqlen", "batch", "embedding")).to(device)],
+                                  ntorch.zeros((1, init_state.shape["batch"],
+                                                init_state.shape["embedding"]),
+                                               names=("trgSeqlen", "batch", "embedding")).to(device)],
                                  "embedding")
         output, (hn, cn) = self.lstm(first_input)
         hidden_states = [(hn, cn)]
-        for i in range(1, embedded.shape["trgSeqlen"]):
+        for i in range(2, embedded.shape["trgSeqlen"] + 1):
             last_hidden = hidden_states[-1]
             attention = init_state.dot("embedding", last_hidden[0].squeeze("layers")) \
                                   .softmax("srcSeqlen")
@@ -82,13 +81,11 @@ class LSTMDecoderAttn(nnn.Module):
             context = attention.dot("srcSeqlen", init_state)
             context = NamedTensor(context.values.unsqueeze(-1),
                                   names=(*context.shape.keys(), 'trgSeqlen'))
-            curr_word = embedded[{"trgSeqlen": slice(i - 1, i)}]
-            lstm_input = ntorch.cat([curr_word, context], "embedding")
+            prev_word = embedded[{"trgSeqlen": slice(i - 1, i)}]
+            lstm_input = ntorch.cat([prev_word, context], "embedding")
             output, (hn, cn) = self.lstm(lstm_input, last_hidden)
             hidden_states.append((hn, cn))
-            if log_probs is None:
-                log_probs = self.w(output)
-            else:
-                log_probs = ntorch.cat([log_probs, self.w(output)], "trgSeqlen")
         
-        return log_probs
+        return self.w(ntorch.cat([hn for (hn, cn)
+                                  in hidden_states], "layers")
+                      .rename("layers", "trgSeqlen"))
