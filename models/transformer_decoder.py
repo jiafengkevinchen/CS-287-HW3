@@ -34,7 +34,7 @@ class TransformerDecoder(nnn.Module):
         if not self.training:
             self.attn_weights = ntorch.stack(self.attn_weights, "layers")
         x = self.norm(x)
-        return self.w(x)g
+        return self.w(x)
 
 
 
