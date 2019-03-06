@@ -3,7 +3,7 @@ from torch import nn
 from namedtensor import ntorch, NamedTensor
 from namedtensor.nn import nn as nnn
 from attention import Attention
-from layer_norm import LayerNorm
+from layernorm import LayerNorm
 
 class SublayerConnection(nnn.Module):
     """
