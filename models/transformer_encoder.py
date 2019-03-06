@@ -19,7 +19,6 @@ class TransformerEncoder(nnn.Module):
 
         self.layers = nnn.ModuleList([deepcopy(layer) for _ in range(nlayers)])
         self.norm = LayerNorm(size, "embedding")
-        self.embedding = nnn.embedding
 
     def forward(self, x):
         embed = self.embed(x)
