@@ -66,3 +66,6 @@ batch = next(iter(train_iter))
 def escape(l):
     return l.replace("\"", "<quote>").replace(",", "<comma>")
 
+pad_idx_EN = EN.vocab.stoi['<pad>']
+V_EN = len(EN.vocab)
+
