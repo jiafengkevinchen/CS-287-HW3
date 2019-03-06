@@ -3,6 +3,7 @@ from torch import nn
 from namedtensor import ntorch, NamedTensor
 from namedtensor.nn import nn as nnn
 from attention import Attention
+from utils import *
 
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
@@ -68,23 +69,27 @@ class LSTMDecoderAttn(nnn.Module):
 
     def forward(self, init_state, batch_text):
         H,  (ht, ct) = init_state
+
         embedded = self.embed(batch_text)
 
         hidden_states = []
         attention_weights = []
+        ht_flat = flatten(ht, "layers", "embedding")
 
         for t in range(embedded.shape["trgSeqlen"]):
-            a, context = self.attn(ht, H, "embedding", "srcSeqlen")
+
+            a, context = self.attn(ht_flat, H, "embedding", "srcSeqlen")
             word_t = embedded[{'trgSeqlen': slice(t, t+1)}]
             lstm_input = ntorch.cat([word_t, context], "embedding")
             output, (ht, ct) = self.lstm(lstm_input, (ht, ct))
             if not self.training:
                 attention_weights.append(a)
-            hidden_states.append(ht)
+            ht_flat = flatten(ht, "layers", "embedding")
+            hidden_states.append(ht_flat)
+
         if not self.training:
             self.attention = ntorch.stack(attention_weights, 'trgSeqlen')
-        return (self.w(ntorch.cat(hidden_states, "layers")
-                       .rename("layers", "trgSeqlen")))
+        return self.w(ntorch.stack(hidden_states, "trgSeqlen"))
 
         # first_input = ntorch.cat([embedded[{"trgSeqlen": slice(0, 1)}],
         #                           ntorch.zeros((1, init_state.shape["batch"],

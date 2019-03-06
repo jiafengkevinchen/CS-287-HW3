@@ -161,3 +161,6 @@ def evaluate_model(val_iter, args, **models):
                 'model_name':name,
                 'loss': loss, 'map' : map_ / batch_size})
     return pd.DataFrame(results)
+
+def flatten(x, dim_kill, dim_grow):
+    return ntorch.cat(x.unbind(dim_kill), dim=dim_grow)
