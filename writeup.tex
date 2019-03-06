@@ -23,7 +23,15 @@ Francisco Rivera}
 In this writeup we consider neural machine translation---given a source sentence in one language, can we generate a target sentence in another? We work with the prevailing encoder-decoder architecture, where one neural network, the \emph{encoder}, maps the source sentence into a numerical tensor---which is supposed to be a latent representation of the source sentence. Another network, the \emph{decoder}, is a language model that takes the encoded sentence as an input, and generates a sentence in the target language. 
 
 \section{Problem Description}
-In this writeup, we consider the problem of machine translation. Let \[\bm x_i = [x_{i1},\ldots,x_{iS}]\] be a source sentence, where each word belongs to some source vocabulary, $x_{it} \in \mathcal V_s$. Let \[\bm y_i = [y_{i1},\ldots,y_{iT}]\] be a target sentence, with each target word belonging to some target vocabulary, $y_{it} \in \mathcal V_t$. Our goal is to learn $p(\bm y_i \mid \bm x_i)$. We often treat the prediction like a language model---i.e. we consider the sequential conditional distributions $p(y_{it} \mid y_{i1},\ldots,y_{i,t-1}, \bm x_i)$.
+In this writeup, we consider the problem of machine translation. Let 
+\begin{equation}
+	\bm x_i = [x_{i1},\ldots,x_{iS}]
+\end{equation}
+be a source sentence, where each word belongs to some source vocabulary, $x_{it} \in \mathcal V_s$. Let 
+\begin{equation}
+	\bm y_i = [y_{i1},\ldots,y_{iT}]
+\end{equation}
+be a target sentence, with each target word belonging to some target vocabulary, $y_{it} \in \mathcal V_t$. Our goal is to learn $p(\bm y_i \mid \bm x_i)$. We often treat the prediction like a language model---i.e. we consider the sequential conditional distributions $p(y_{it} \mid y_{i1},\ldots,y_{i,t-1}, \bm x_i)$.
 
 
 \section{Model and Algorithms}
