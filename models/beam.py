@@ -83,7 +83,7 @@ class Beam(nnn.Module):
         self.filled = [False] * batch_size
         
         while (sum(self.filled) < batch_size and 
-            self.nodes.shape['trgSeqlen'] <= self.max_len):
+            self.nodes.shape['trgSeqlen'] - 1 <= self.max_len):
             log_prob, vocab_size = self.log_prob(model, src)
             self.top_scores, self.top_score_locs = log_prob.topk('classes', self.topk)
             self.advance(batch_size, vocab_size)
