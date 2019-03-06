@@ -18,4 +18,4 @@ class PositionalEncoding(nnn.Module):
             names=[*x.shape.keys(), 'embedding'],
             device=self.position_embedding.values.device)
         mask[{self.seqlen_name: slice(0, length)}] = self.position_embedding[{self.seqlen_name: slice(0, length)}]
-        return mask
+        return mask.to(self.position_embedding.values.device)
