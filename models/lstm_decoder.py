@@ -67,9 +67,8 @@ class LSTMDecoderAttn(nnn.Module):
         self.attn = Attention()
 
     def forward(self, init_state, batch_text):
-        H, encoder_last = init_state
+        H,  (ht, ct) = init_state
         embedded = self.embed(batch_text)
-        ht, ct = encoder_last
 
         hidden_states = []
         attention_weights = []
