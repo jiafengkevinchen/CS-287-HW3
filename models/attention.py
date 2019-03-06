@@ -8,10 +8,14 @@ device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 class Attention(nnn.Module):
     def __init__(self):
         super().__init__()
+
     def forward(self, query, key, embedding_dim, softmax_dim,
                 mask=None, value=None, dropout=None,
-                self_attention=False):
-        log_weights = (query.dot(embedding_dim, key) / (key.size(embedding_dim) ** .5))
+                self_attention=False, normalize=True):
+    	if normalize:
+        	log_weights = query.dot(embedding_dim, key) / (key.size(embedding_dim) ** .5)
+        else:
+        	log_weights = query.dot(embedding_dim, key)
 
         if mask is not None:
             log_weights = log_weights.masked_fill_(mask == 0, -1e9)
