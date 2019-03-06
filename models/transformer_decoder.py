@@ -24,10 +24,10 @@ class TransformerDecoder(nnn.Module):
 
         self.layers = nnn.ModuleList([deepcopy(layer) for _ in range(nlayers)])
         self.norm = LayerNorm(size, "embedding")
-        self.attn_weights = []
         self.w = nnn.Linear(in_features=size, out_features=len(TEXT.vocab)).spec("embedding", "classes")
 
     def forward(self, encoded, trg):
+        attn_weights = []
         pos = ntorch.ones(*trg.shape.values(), names=[*trg.shape.keys()]).to(trg.values.device)
         pos_vec = ntorch.arange(trg.size("trgSeqlen"), names="trgSeqlen").float()
         pos_vec[pos_vec > MAX_LEN] = MAX_LEN
@@ -39,10 +39,11 @@ class TransformerDecoder(nnn.Module):
         for layer in self.layers:
             a, x = layer(encoded, x)
             if not self.training:
-                self.attn_weights.append(a)
+                attn_weights.append(a)
         # if not self.training:
         #     self.attn_weights = ntorch.stack(self.attn_weights, "layers")
         x = self.norm(x)
+        self.attn_weights = attn_weights
         return self.w(x)
 
 
