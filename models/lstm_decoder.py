@@ -44,7 +44,8 @@ class LSTMDecoderAttn(nnn.Module):
                  embedding_dim=100,
                  hidden_dim=150,
                  num_layers=1,
-                 dropout=0):
+                 dropout=0,
+                 attn_normalize=True):
         super().__init__()
 
         pad_idx = TEXT.vocab.stoi['<pad>']
@@ -65,7 +66,7 @@ class LSTMDecoderAttn(nnn.Module):
 
         self.attention = []
 
-        self.attn = Attention()
+        self.attn = Attention(attn_normalize)
 
     def forward(self, init_state, batch_text):
         H,  (ht, ct) = init_state
