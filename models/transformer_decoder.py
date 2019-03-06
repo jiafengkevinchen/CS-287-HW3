@@ -4,6 +4,7 @@ from layernorm import LayerNorm
 from namedtensor import ntorch, NamedTensor
 from position_encoding import PositionalEncoding
 
+MAX_LEN = 20
 
 class TransformerDecoder(nnn.Module):
     def __init__(self, embed_dim, position_dim, TEXT, layer, nlayers=3):
@@ -16,7 +17,10 @@ class TransformerDecoder(nnn.Module):
         self.embed = nnn.Embedding(num_embeddings=len(TEXT.vocab),
                                    embedding_dim=embed_dim,
                                    padding_idx=pad_idx)
-        self.position_embed = PositionalEncoding(position_dim, "trgSeqlen")
+
+        self.position_embed = nnn.Embedding(num_embeddings=MAX_LEN + 1,
+                                   embedding_dim=position_dim,
+                                   padding_idx=MAX_LEN+1)
 
         self.layers = nnn.ModuleList([deepcopy(layer) for _ in range(nlayers)])
         self.norm = LayerNorm(size, "embedding")
@@ -24,8 +28,13 @@ class TransformerDecoder(nnn.Module):
         self.w = nnn.Linear(in_features=size, out_features=len(TEXT.vocab)).spec("embedding", "classes")
 
     def forward(self, encoded, trg):
+        pos = ntorch.ones(*trg.shape.values(), names=[*trg.shape.keys()]).to(trg.values.device)
+        pos_vec = ntorch.arange(trg.size("srcSeqlen"), names="srcSeqlen")
+        pos_vec[pos_vec > MAX_LEN] = MAX_LEN + 1
         embed = self.embed(trg)
-        position_embed = self.position_embed(trg)
+        position_embed = self.position_embed(pos + pos_vec.to(trg.values.device))
+
+
         x = ntorch.cat([embed, position_embed], "embedding")
         for layer in self.layers:
             a, x = layer(encoded, x)
