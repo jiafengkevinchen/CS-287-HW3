@@ -28,6 +28,6 @@ class LSTMEncoder(nnn.Module):
         embedded = self.embed(batch_text)
         hidden_states, last_state = self.lstm(embedded)
         if self.history:
-            return hidden_states
+            return hidden_states, last_state
         else:
             return last_state
