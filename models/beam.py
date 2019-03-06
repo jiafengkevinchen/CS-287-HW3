@@ -59,7 +59,7 @@ class Beam(nnn.Module):
                     added_word = sentence[{'trgSeqlen': -1}]
                     if len(self.result[b]) < self.topk and \
                         (added_word.values.item() == self.TEXT.vocab.stoi["</s>"]
-                         or self.nodes.shape['trgSeqlen'] == self.max_len):
+                         or self.nodes.shape['trgSeqlen'] == self.max_len + 1):
                         self.result[b].append(sentence)
                     else:
                         new_nodes[{'beam': beam_count}] = sentence
@@ -83,7 +83,7 @@ class Beam(nnn.Module):
         self.filled = [False] * batch_size
         
         while (sum(self.filled) < batch_size and 
-            self.nodes.shape['trgSeqlen'] - 1 <= self.max_len):
+            self.nodes.shape['trgSeqlen'] <= self.max_len):
             log_prob, vocab_size = self.log_prob(model, src)
             self.top_scores, self.top_score_locs = log_prob.topk('classes', self.topk)
             self.advance(batch_size, vocab_size)
