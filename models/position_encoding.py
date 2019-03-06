@@ -11,8 +11,9 @@ class PositionalEncoding(nnn.Module):
         self.position_embedding = ntorch.zeros(size, MAX_LEN, names=("embedding", seqlen_name))
         self.register_parameter("positionembed", self.position_embedding)
         self.seqlen_name = seqlen_name
+        self.size = size
     def forward(self, x):
-        length = x.size(self.seqlen_name)
-        mask = ntorch.zeros(*x.shape.values(), names=[*x.shape.keys()])
-        mask[{self.seqlen_name: slice(0, length)}] = self.position_embedding
+        length = min(x.size(self.seqlen_name), MAX_LEN)
+        mask = ntorch.zeros(*x.shape.values(), self.size , names=[*x.shape.keys(), 'embedding'])
+        mask[{self.seqlen_name: slice(0, length)}] = self.position_embedding[{self.seqlen_name: slice(0, length)}]
         return mask
