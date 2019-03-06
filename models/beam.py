@@ -2,6 +2,7 @@ import torch
 from namedtensor import ntorch, NamedTensor
 from namedtensor.nn import nn as nnn
 
+device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
 class Beam(nnn.Module):
     def __init__(self, trg_language, beam_size=3, topk=10, max_len=50):
