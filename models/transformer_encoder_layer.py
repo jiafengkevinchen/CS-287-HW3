@@ -9,7 +9,7 @@ class TransformerEncoderLayer(nnn.Module):
 
         self.sublayer = nnn.ModuleList([
                 SublayerConnection(size, dropout, "embedding")
-            ] for _ in range(2))
+                for _ in range(2)])
         self.size = size
 
 
