@@ -68,4 +68,3 @@ def escape(l):
 
 pad_idx_EN = EN.vocab.stoi['<pad>']
 V_EN = len(EN.vocab)
-
