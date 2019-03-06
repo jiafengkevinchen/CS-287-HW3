@@ -16,7 +16,7 @@ class TransformerDecoder(nnn.Module):
         self.embed = nnn.Embedding(num_embeddings=len(TEXT.vocab),
                                    embedding_dim=embed_dim,
                                    padding_idx=pad_idx)
-        self.position_embed = PositionalEncoding(position_dim, "srcSeqlen")
+        self.position_embed = PositionalEncoding(position_dim, "trgSeqlen")
 
         self.layers = nnn.ModuleList([deepcopy(layer) for _ in range(nlayers)])
         self.norm = LayerNorm(size, "embedding")
@@ -34,7 +34,7 @@ class TransformerDecoder(nnn.Module):
         if not self.training:
             self.attn_weights = ntorch.stack(self.attn_weights, "layers")
         x = self.norm(x)
-        return self.w(x)
+        return self.w(x)g
 
 
 
