@@ -79,6 +79,7 @@ class LSTMDecoderAttn(nnn.Module):
         for t in range(embedded.shape["trgSeqlen"]):
 
             a, context = self.attn(ht_flat, H, "embedding", "srcSeqlen")
+            context = ntorch.stack([context], "trgSeqlen")
             word_t = embedded[{'trgSeqlen': slice(t, t+1)}]
             lstm_input = ntorch.cat([word_t, context], "embedding")
             output, (ht, ct) = self.lstm(lstm_input, (ht, ct))
