@@ -164,3 +164,5 @@ def evaluate_model(val_iter, args, **models):
 
 def flatten(x, dim_kill, dim_grow):
     return ntorch.cat(x.unbind(dim_kill), dim=dim_grow)
+def unsqueeze(x, dim):
+    return ntorch.stack([x], dim)
