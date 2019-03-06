@@ -6,13 +6,14 @@ from namedtensor.nn import nn as nnn
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
 class Attention(nnn.Module):
-    def __init__(self):
+    def __init__(self, normalize=True):
         super().__init__()
+        self.normalize = normalize
 
     def forward(self, query, key, embedding_dim, softmax_dim,
                 mask=None, value=None, dropout=None,
-                self_attention=False, normalize=True):
-        if normalize:
+                self_attention=False):
+        if self.normalize:
             log_weights = (query.dot(embedding_dim, key)
                            / (key.size(embedding_dim) ** .5))
         else:
