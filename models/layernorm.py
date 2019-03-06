@@ -8,8 +8,8 @@ class LayerNorm(nnn.Module):
         super().__init__()
         self.a_2 = ntorch.ones(features, names=(dim,))
         self.b_2 = ntorch.ones(features, names=(dim,))
-        self.register_parameter("layernorm.a_2", self.a_2)
-        self.register_parameter("layernorm.b_2", self.b_2)
+        self.register_parameter("layernorma2", self.a_2)
+        self.register_parameter("layernormb2", self.b_2)
         self.eps = eps
         self.dim = dim
 
