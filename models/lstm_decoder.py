@@ -78,7 +78,7 @@ class LSTMDecoderAttn(nnn.Module):
             last_hidden = hidden_states[-1]
             attention = init_state.dot("embedding", last_hidden[0].squeeze("layers")) \
                                   .softmax("srcSeqlen")
-            if self.training is True:
+            if self.training is False:
                 attention_weights.append(attention)
             context = attention.dot("srcSeqlen", init_state)
             context = NamedTensor(context.values.unsqueeze(-1),
@@ -89,7 +89,8 @@ class LSTMDecoderAttn(nnn.Module):
             hidden_states.append((hn, cn))
         
         # save attention weights when evaluating
-        self.attention = ntorch.stack(attention_weights, 'trgSeqlen')
+        if self.training is False:
+            self.attention = ntorch.stack(attention_weights, 'trgSeqlen')
 
         return self.w(ntorch.cat([hn for (hn, cn)
                                   in hidden_states], "layers")
