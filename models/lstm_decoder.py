@@ -75,7 +75,7 @@ class LSTMDecoderAttn(nnn.Module):
         attention_weights = []
 
         for t in range(embedded.shape["trgSeqlen"]):
-            a, context = self.attn(ht, H)
+            a, context = self.attn(ht, H, "embedding", "srcSeqlen")
             word_t = embedded[{'trgSeqlen': slice(t, t+1)}]
             lstm_input = ntorch.cat([word_t, context], "embedding")
             output, (ht, ct) = self.lstm(lstm_input, (ht, ct))
