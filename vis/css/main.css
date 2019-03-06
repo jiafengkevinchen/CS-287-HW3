@@ -1,0 +1,32 @@
+body {
+  margin-left: 5em;
+  margin-right: 25em;
+  margin-top: 5em;
+}
+
+.sentence {
+  margin-top: 1em;
+}
+
+.word {
+  margin: .2em;
+  padding: .1em;
+  cursor: pointer;
+  font-size: 22pt;
+  font-family: monospace;
+}
+
+.word:hover {
+  border: .5px solid grey;
+}
+
+.translation {
+  border: 1px solid black;
+}
+
+h1 {
+  margin-bottom: .3em;
+}
+
+h2 {
+  margin-top: 1em;
