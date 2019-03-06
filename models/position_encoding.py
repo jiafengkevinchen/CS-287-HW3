@@ -4,7 +4,7 @@ from namedtensor import ntorch, NamedTensor
 from namedtensor.nn import nn as nnn
 
 MAX_LEN = 30
-device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+# device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
 class PositionalEncoding(nnn.Module):
     def __init__(self, size, seqlen_name):
@@ -15,6 +15,8 @@ class PositionalEncoding(nnn.Module):
         self.size = size
     def forward(self, x):
         length = min(x.size(self.seqlen_name), MAX_LEN)
-        mask = ntorch.zeros(*x.shape.values(), self.size , names=[*x.shape.keys(), 'embedding']).to(device)
+        mask = ntorch.zeros(*x.shape.values(), self.size ,
+            names=[*x.shape.keys(), 'embedding'],
+            device=self.position_embedding.values.device)
         mask[{self.seqlen_name: slice(0, length)}] = self.position_embedding[{self.seqlen_name: slice(0, length)}]
         return mask
