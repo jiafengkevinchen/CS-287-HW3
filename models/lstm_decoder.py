@@ -53,13 +53,13 @@ class LSTMDecoderAttn(nnn.Module):
                                    embedding_dim=embedding_dim,
                                    padding_idx=pad_idx)
 
-        self.lstm = nnn.LSTM(input_size=embedding_dim + 2 * hidden_dim,
-                             hidden_size=hidden_dim * 2,
+        self.lstm = nnn.LSTM(input_size=embedding_dim + hidden_dim,
+                             hidden_size=hidden_dim,
                              num_layers=num_layers,
                              dropout=dropout) \
             .spec("embedding", "trgSeqlen")
 
-        self.w = nnn.Linear(in_features=hidden_dim * 2,
+        self.w = nnn.Linear(in_features=hidden_dim,
                             out_features=len(TEXT.vocab)) \
             .spec("embedding", "classes")
 
