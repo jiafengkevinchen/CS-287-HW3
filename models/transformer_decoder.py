@@ -20,7 +20,7 @@ class TransformerDecoder(nnn.Module):
 
         self.position_embed = nnn.Embedding(num_embeddings=MAX_LEN + 1,
                                    embedding_dim=position_dim,
-                                   padding_idx=MAX_LEN+1)
+                                   padding_idx=MAX_LEN)
 
         self.layers = nnn.ModuleList([deepcopy(layer) for _ in range(nlayers)])
         self.norm = LayerNorm(size, "embedding")
@@ -30,7 +30,7 @@ class TransformerDecoder(nnn.Module):
     def forward(self, encoded, trg):
         pos = ntorch.ones(*trg.shape.values(), names=[*trg.shape.keys()]).to(trg.values.device)
         pos_vec = ntorch.arange(trg.size("srcSeqlen"), names="srcSeqlen")
-        pos_vec[pos_vec > MAX_LEN] = MAX_LEN + 1
+        pos_vec[pos_vec > MAX_LEN] = MAX_LEN
         embed = self.embed(trg)
         position_embed = self.position_embed(pos + pos_vec.to(trg.values.device))
 
