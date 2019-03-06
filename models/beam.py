@@ -5,9 +5,9 @@ from namedtensor.nn import nn as nnn
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
 class Beam(nnn.Module):
-    def __init__(self, trg_language, beam_size=3, topk=10, max_len=50):
+    def __init__(self, trg_lang, beam_size=3, topk=10, max_len=50):
         super().__init__()
-        self.trg_language = trg_language
+        self.trg_lang = trg_lang
         self.beam_size = beam_size
         self.topk = topk
         self.max_len = max_len
@@ -58,7 +58,7 @@ class Beam(nnn.Module):
                     sentence = self.generate_sentence(b, k, vocab_size)
                     added_word = sentence[{'trgSeqlen': -1}]
                     if len(self.result[b]) < self.topk and \
-                        (added_word.values.item() == EN.vocab.stoi["</s>"]
+                        (added_word.values.item() == self.trg_lang.vocab.stoi["</s>"]
                          or self.nodes.shape['trgSeqlen'] == self.max_len):
                         self.result[b].append(sentence)
                     else:
@@ -76,7 +76,7 @@ class Beam(nnn.Module):
         batch_size = src.shape['batch']
         self.nodes = (ntorch.ones((batch_size, self.beam_size, 1),
                                   names=('batch', 'beam', 'trgSeqlen'))
-                     * self.trg_language.vocab.stoi["<s>"]).long().to(device)
+                     * self.trg_lang.vocab.stoi["<s>"]).long().to(device)
         self.scores = ntorch.zeros((batch_size, self.beam_size),
                                    names=('batch', 'beam')).to(device)
         self.result = [[] for _ in range(batch_size)]
