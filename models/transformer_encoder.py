@@ -27,7 +27,7 @@ class TransformerEncoder(nnn.Module):
 
     def forward(self, x):
         pos = ntorch.ones(*x.shape.values(), names=[*x.shape.keys()]).to(x.values.device)
-        pos_vec = ntorch.arange(x.size("srcSeqlen"), names="srcSeqlen")
+        pos_vec = ntorch.arange(x.size("srcSeqlen"), names="srcSeqlen").float()
         pos_vec[pos_vec > MAX_LEN] = MAX_LEN
         embed = self.embed(x)
         position_embed = self.position_embed((pos * pos_vec.to(x.values.device)).long())
