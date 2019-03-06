@@ -30,7 +30,7 @@ class TransformerEncoder(nnn.Module):
         pos_vec = ntorch.arange(x.size("srcSeqlen"), names="srcSeqlen")
         pos_vec[pos_vec > MAX_LEN] = MAX_LEN
         embed = self.embed(x)
-        position_embed = self.position_embed(pos + pos_vec.to(x.values.device))
+        position_embed = self.position_embed((pos * pos_vec.to(x.values.device)).long())
 
 
         x = ntorch.cat([embed, position_embed], "embedding")
