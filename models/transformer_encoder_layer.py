@@ -14,7 +14,6 @@ class TransformerEncoderLayer(nnn.Module):
 
 
     def forward(self, src):
-        a, x = self.sublayer[0](src,
-            lambda src: self.attn(src, src, "embedding", "srcSeqlen"))
+        a, x = self.sublayer[0](src, lambda src: self.attn(src, src, "embedding", "srcSeqlen"))
         return self.sublayer[1](x, self.feed_forward)
 

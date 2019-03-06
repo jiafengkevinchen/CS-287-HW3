@@ -18,7 +18,7 @@ class SublayerConnection(nnn.Module):
     def forward(self, x, sublayer):
         "Apply residual connection to any sublayer with the same size."
         out = sublayer(self.norm(x))
-        if out is tuple:
+        if type(out) is tuple:
             a, context = out
             return a, x + self.dropout(context)
         else:
