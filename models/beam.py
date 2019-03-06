@@ -54,9 +54,9 @@ class Beam(nnn.Module):
                 for k in range(self.topk):
                     sentence = self.generate_sentence(b, k, vocab_size)
                     added_word = sentence[{'trgSeqlen': -1}]
-                    if len(self.result[b]) < self.topk and # topk has't been filled
-                        ((added_word.values.item() == EN.vocab.stoi["</s>"] # reaches EOS
-                         or self.nodes.shape['trgSeqlen'] == self.max_len # length limit
+                    if len(self.result[b]) < self.topk and \
+                        ((added_word.values.item() == EN.vocab.stoi["</s>"]
+                         or self.nodes.shape['trgSeqlen'] == self.max_len))
                         self.result[b].append(sentence)
                     else:
                         new_nodes[{'beam': beam_count}] = sentence
