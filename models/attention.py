@@ -8,8 +8,11 @@ device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 class Attention(nnn.Module):
     def __init__(self):
         super().__init__()
-    def forward(self, h, H, embedding_dim, src_seqlen_dim):
-        log_weights = (h.dot(embedding_dim, H) / (H.size(embedding_dim) ** .5))
+    def forward(self, h, H, embedding_dim, src_seqlen_dim, normalize=True):
+    	if normalize:
+        	log_weights = (h.dot(embedding_dim, H) / (H.size(embedding_dim) ** .5))
+        else:
+        	log_weights = h.dot(embedding_dim, H
         a = log_weights.softmax(src_seqlen_dim)
 
         return (a, (a * H).sum(src_seqlen_dim))
