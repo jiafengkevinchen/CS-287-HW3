@@ -9,12 +9,11 @@ class TransformerEncoderLayer(nnn.Module):
 
         self.sublayer = nnn.ModuleList([
                 SublayerConnection(size, dropout, "embedding")
-            ] for _ in range(2))
+                for _ in range(2)])
         self.size = size
 
 
     def forward(self, src):
-        x = self.sublayer[0](src,
-            lambda src: self.attn(src, src, "embedding", "srcSeqlen"))
+        a, x = self.sublayer[0](src, lambda src: self.attn(src, src, "embedding", "srcSeqlen"))
         return self.sublayer[1](x, self.feed_forward)
 
