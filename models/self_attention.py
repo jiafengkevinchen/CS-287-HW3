@@ -9,6 +9,7 @@ class SelfAttention(Attention):
         super().__init__()
     def forward(self, query, key, embedding_dim, softmax_dim, mask=None,
         value=None, **kwargs):
+        # Source is key,values, Target is query
         target_name = f"trg{softmax_dim}"
         trg = key.rename(softmax_dim, target_name)
         if mask is not None:
