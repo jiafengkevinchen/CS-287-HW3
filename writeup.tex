@@ -10,6 +10,7 @@
 \usepackage{nameref}
 \usepackage{pdflscape}
 \newcommand{\sts}{Seq2Seq}
+\newcommand{\embed}{\mathsf{embed}}
 \title{HW3: Neural Machine Translation}
 \author{Jiafeng Chen \and Yufeng Ling \and
 Francisco Rivera}
@@ -29,7 +30,9 @@ In this writeup, we consider the problem of machine translation. Let \[\bm x_i =
 
 \subsection{Sequence-to-Sequence (\sts)}
 \label{sub:seq2seq}
+In \sts{} \TODO{citation}, we have a encoder-decoder network architecture. The \emph{encoder}, in the vanilla \sts{} implementation, is an LSTM network that takes an embedding of the source sentence $\embed(\bm x_{i1}),\ldots,\embed(\bm x_{iS})$ and outputs a list of hidden states $\bm h_{i1},\ldots, \bm h_{iS}$ and cell state $\bm c_{iS}$.
 
+In \sts{}, the decoder is another LSTM which is initialized with $\bm h_{iS}$ and $\bm c_{iS}$. At training time, the decoder LSTM takes embeddings of the ground truth target $\embed(y_{it})$ and output probability predictions for $y_{i,t+1}$. These predictions are penalized with the usual cross entropy loss at training time. At prediction time, the decoder LSTM gets passed the start-of-sentence token \texttt{<s>} and outputs predictions for the first word. We then iteratively pass in its top predictions to obtain predictions for future words. For instance, a greedy algorithm to generate a sentence would be taking the top prediction every time and pass the predicted sentence so far into the decoder to obtain the next word---stopping when the end-of-sentence token \texttt{</s>} is the top prediction.\footnote{This corresponds to beam search with beam size 1.}  
 
 \subsection{Attention}
 \label{sub:attn}
