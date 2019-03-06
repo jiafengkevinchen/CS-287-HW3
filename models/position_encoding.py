@@ -3,8 +3,7 @@ from torch import nn
 from namedtensor import ntorch, NamedTensor
 from namedtensor.nn import nn as nnn
 
-MAX_LEN = 30
-# device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+MAX_LEN = 20
 
 class PositionalEncoding(nnn.Module):
     def __init__(self, size, seqlen_name):
