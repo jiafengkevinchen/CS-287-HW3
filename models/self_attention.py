@@ -5,8 +5,8 @@ from namedtensor.nn import nn as nnn
 from attention import Attention
 
 class SelfAttention(Attention):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, *args):
+        super().__init__(*args)
     def forward(self, query, key, embedding_dim, softmax_dim, mask=None,
         value=None, **kwargs):
         # Source is key,values, Target is query
