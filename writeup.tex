@@ -138,13 +138,62 @@ dropout = .1
 
 \section{Experiments}
 
+\subsection{Attention Weights Visualization}
+\begin{figure}
+	\centering
+	\includegraphics[width=.8\linewidth]{figs/attn1.png}
+	\includegraphics[width=.8\linewidth]{figs/attn2.png}
+	\includegraphics[width=.8\linewidth]{figs/attn3.png}
+	\caption{Visualization of attention}
+\end{figure}
+
+\begin{figure}
+	\centering
+	\includegraphics[width=.8\linewidth]{figs/attn_mat.png}
+	\caption{Visualization of attention matrix weights}
+\end{figure}
+
+\begin{landscape}
+\begin{table}[tb]
+    
+    \centering
+\begin{tabular}{ll}
+\toprule
+model name                   &specifications\\
+\midrule
+\texttt{Seq2Seq} & 100 embedding, 100 hidden, no dropout\\
+\texttt{Seq2SeqAttn} & Bi-directional LSTM, 100 embedding, 100 hidden, no dropout\\
+\texttt{Megatron}         &  \\
+\bottomrule
+\end{tabular}
+    \caption{Both models used only one layer in the decoder and trained with Adam and learning rate $10^{-3}$ over 10 epochs. For \texttt{Seq2Seq}, decrease in validation loss flattened at epoch 8. For \texttt{Seq2SeqAttn}, training stopped at epoch 7 after loss starting going up.}
+    \label{tab:spec}
+\end{table}
+\begin{table}[h]
+\centering
+\begin{tabular}{lrrr}
+\toprule
+{}                                     & Loss  & Perplexity & BLEU \\
+model name                             &       &        & \\
+\midrule
+\texttt{Seq2Seq}                      & 3.23 & 25.36  & 6.32 \\
+\texttt{Seq2SeqAttn}                      & 2.71 & 15.05  & 17.77 \\
+\bottomrule
+\end{tabular}
+\caption{Performance metrics for different models}
+\label{table:performance}
+\end{table}
+\end{landscape}
 
 \bibliographystyle{apalike}
 \bibliography{writeup}
 
 \appendix
 \section{Model implementation}
-\subsection{Training}
-
+\lstinputlisting[caption=Sequence-to-Sequence]{models/seq2seq.py}
+\lstinputlisting[caption=LSTM encoder]{models/lstm_encoder.py}
+\lstinputlisting[caption=LSTM decoder]{models/lstm_decoder.py}
+\lstinputlisting[caption=Attention]{models/attention.py}
+\lstinputlisting[caption=Beam search]{models/beam.py}
 
 \end{document}
