@@ -14,9 +14,12 @@ class Seq2Seq(nnn.Module):
 ce_loss = nnn.CrossEntropyLoss().spec("classes")
 
 # def seq2seq_loss_fn(model, batch):
-#     out = model(batch.src, batch.trg)
 #     length = batch.trg.size('trgSeqlen')
-#     return ce_loss(out[{'trgSeqlen': slice(0, length-1)}],
-#                    batch.trg[{'trgSeqlen': slice(1, length)}])
-
-
+#     out = model(batch.src, batch.trg)[{'trgSeqlen': slice(0, length - 1)}]
+#     trg = batch.trg[{'trgSeqlen': slice(1, length)}]
+#     mask = (trg != pad_idx_EN).float()
+    
+#     n = trg.values.numel()
+#     loss = ce_loss(mask * out, trg)
+    
+#     return (loss * n - np.log(V_EN) * (n - mask.sum().item())) / mask.sum().item()
