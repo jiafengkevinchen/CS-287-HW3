@@ -94,33 +94,3 @@ class LSTMDecoderAttn(nnn.Module):
         if not self.training:
             self.attention = ntorch.stack(attention_weights, 'trgSeqlen')
         return self.w(ntorch.stack(hidden_states, "trgSeqlen"))
-
-        # first_input = ntorch.cat([embedded[{"trgSeqlen": slice(0, 1)}],
-        #                           ntorch.zeros((1, init_state.shape["batch"],
-        #                                         init_state.shape["embedding"]),
-        #                                        names=("trgSeqlen", "batch", "embedding")).to(device)],
-        #                          "embedding")
-        # output, (hn, cn) = self.lstm(first_input, )
-
-        # (hn, cn)]
-        # for i in range(2, embedded.shape["trgSeqlen"] + 1):
-        #     last_hidden = hidden_states[-1]
-        #     attention = init_state.dot("embedding", last_hidden[0].squeeze("layers")) \
-        #                           .softmax("srcSeqlen")
-        #     if self.training is False:
-        #         attention_weights.append(attention)
-        #     context = attention.dot("srcSeqlen", init_state)
-        #     context = NamedTensor(context.values.unsqueeze(-1),
-        #                           names=(*context.shape.keys(), 'trgSeqlen'))
-        #     prev_word = embedded[{"trgSeqlen": slice(i - 1, i)}]
-        #     lstm_input = ntorch.cat([prev_word, context], "embedding")
-        #     output, (hn, cn) = self.lstm(lstm_input, last_hidden)
-        #     hidden_states.append((hn, cn))
-
-        # # save attention weights when evaluating
-        # if self.training is False:
-        #     self.attention = ntorch.stack(attention_weights, 'trgSeqlen')
-
-        # return self.w(ntorch.cat([hn for (hn, cn)
-        #                           in hidden_states], "layers")
-        #               .rename("layers", "trgSeqlen"))

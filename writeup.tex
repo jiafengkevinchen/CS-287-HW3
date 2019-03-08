@@ -38,13 +38,13 @@ be a target sentence, with each target word belonging to some target vocabulary,
 
 \subsection{Sequence-to-Sequence (\sts)}
 \label{sub:seq2seq}
-In \sts{} \TODO{citation}, we have a encoder-decoder network architecture. The \emph{encoder}, in the vanilla \sts{} implementation, is an LSTM network that takes an embedding of the source sentence $\embed(\bm x_{i1}),\ldots,\embed(\bm x_{iS})$ and outputs a list of hidden states $\bm h_{i1},\ldots, \bm h_{iS}$ and cell state $\bm c_{iS}$.
+In \sts{} (\cite{sutskever2014sequence}), we have a encoder-decoder network architecture. The \emph{encoder}, in the vanilla \sts{} implementation, is an LSTM network that takes an embedding of the source sentence $\embed(\bm x_{i1}),\ldots,\embed(\bm x_{iS})$ and outputs a list of hidden states $\bm h_{i1},\ldots, \bm h_{iS}$ and cell state $\bm c_{iS}$.
 
 In \sts{}, the decoder is another LSTM which is initialized with $\bm h_{iS}$ and $\bm c_{iS}$. At training time, the decoder LSTM takes embeddings of the ground truth target $\embed(y_{it})$ and output probability predictions for $y_{i,t+1}$. These predictions are penalized with the usual cross entropy loss at training time. At prediction time, the decoder LSTM gets passed the start-of-sentence token \texttt{<s>} and outputs predictions for the first word. We then iteratively pass in its top predictions to obtain predictions for future words. For instance, a greedy algorithm to generate a sentence would be taking the top prediction every time and pass the predicted sentence so far into the decoder to obtain the next word---stopping when the end-of-sentence token \texttt{</s>} is the top prediction.\footnote{This corresponds to beam search with beam size 1.}  
 
 \subsection{Attention}
 \label{sub:attn}
-The attention model builds upon the Sequence-to-Sequence model described in section (\ref{sub:seq2seq}). Instead of only using the end state of the encoded input as input, we take advantage of a bi-directional RNN and generate target sentence by taking in a weighted input of all the states of the encoder. The intuition is that when we are translating a sentence, the adjacent words of the current word also help inform how we should translate the current word. Such weighted average is aptly named ``context''. To formalize this, we let the sequential conditional distribution be given by
+The attention model (\cite{vaswani2017attention}) builds upon the Sequence-to-Sequence model described in section (\ref{sub:seq2seq}). Instead of only using the end state of the encoded input as input, we take advantage of a bi-directional RNN and generate target sentence by taking in a weighted input of all the states of the encoder. The intuition is that when we are translating a sentence, the adjacent words of the current word also help inform how we should translate the current word. Such weighted average is aptly named ``context''. To formalize this, we let the sequential conditional distribution be given by
 \begin{equation}
 	p(y_{it} \mid y_{i1}, \dots, y_{i,t-1}, \bm x_i) = g(y_{i,t-1}, s_t, c_t)
 \end{equation}
@@ -68,7 +68,7 @@ for some function $a$. In our model, we take $a$ to be the dot product between t
 
 \begin{figure}
 	\centering
-	\includegraphics[width=0.4\linewidth]{figs/attn_diagram}
+	\includegraphics[width=0.3\linewidth]{figs/attn_diagram}
 	\caption{Attention Diagram}
 	\label{attn_diagram}
 \end{figure}
@@ -80,10 +80,9 @@ After we have trained a model, since the outputs are conditional probabilities o
 
 Beam search is proposed based on this idea. Instead of selecting the MLE, we select the top $B$ words with the largest conditional probabilities. The parameter $B$ is known as the ``beam width''. At every step, we choose the top $B$ words with the highest joint probability conditional on the $B$ previously generated sentenses $\{\bm y_{i, 1:t-1}^{(b)}\}_{b=1}^B$. That is
 \begin{align}
-	&\arg \max_{y_{it}, b} p(y_{it}, y_{i,t-1}^{(b)}, \dots, y_{i1}^{(b)}, \bm x_i)\nonumber\\
-	=& \arg \max_{y_{it}, b} p(y_{it} \mid y_{i,t-1}^{(b)}, \dots, y_{i1}^{(b)}, \bm x_i) p(y_{i,t-1}^{(b)}, \dots, y_{i1}^{(b)}, \bm x_i).
+	&\arg \max_{y_{it}, b} p(y_{it}, y_{i,t-1}^{(b)}, \dots, y_{i1}^{(b)}, \bm x_i)\nonumber = \arg \max_{y_{it}, b} p(y_{it} \mid y_{i,t-1}^{(b)}, \dots, y_{i1}^{(b)}, \bm x_i) p(y_{i,t-1}^{(b)}, \dots, y_{i1}^{(b)}, \bm x_i).
 \end{align}
-And in the last step we choose the top $k$ to report as results based on given the variance parameter $k$.
+In the last step we choose the top $k$ to report as results.
 
 
 \subsection{Transformer extension}
@@ -137,20 +136,24 @@ dropout = .1
 \end{verbatim}
 
 \section{Experiments}
+We trained two models and document hyperparameters in Table \ref{tab:spec}. Results are displayed in Table \ref{table:performance}. The performance of the Sequence-to-Sequence model in \cite{sutskever2014sequence} is reasonable, but understandabely weaker due to its simple structure of combining two LSTMs without any attention layer applied to the source sentence.
 
-\subsection{Attention Weights Visualization}
+In the attention model proposed in \cite{vaswani2017attention}, we used $1/5$ of the number of parameters compared to the paper due to the constraint of training speed. The main difference is that instead of a 5-layer decoder, we used one layer. Compared to the previous Sequence-to-Sequence model without attention, the performance improved significantly as seen in Table \ref{table:performance}. We experimented normalizing the log-attention weights by factor of $\sqrt{\textrm{embedding size}}$ before proceeding to the softmax function to calculate the attention weights. However, this resulted in uniform weights across all source words and very poor performance. In the properly trained model, we can observe the attention weights reflecting our intuition. See Figure \ref{fig:word_weights} and \ref{fig:mat_weights} for visualization of the attention weights. 
+
 \begin{figure}
 	\centering
-	\includegraphics[width=.8\linewidth]{figs/attn1.png}
-	\includegraphics[width=.8\linewidth]{figs/attn2.png}
-	\includegraphics[width=.8\linewidth]{figs/attn3.png}
-	\caption{Visualization of attention}
+	\includegraphics[width=.7\linewidth]{figs/attn1.png}
+	\includegraphics[width=.7\linewidth]{figs/attn2.png}
+	\includegraphics[width=.7\linewidth]{figs/attn3.png}
+	\caption{Darker background words signify more attention being placed on that word at each point in the translation process.}
+	\label{fig:word_weights}
 \end{figure}
 
 \begin{figure}
 	\centering
 	\includegraphics[width=.8\linewidth]{figs/attn_mat.png}
-	\caption{Visualization of attention matrix weights}
+	\caption{Attention matrix weights}
+	\label{fig:mat_weights}
 \end{figure}
 
 \begin{landscape}
@@ -163,7 +166,6 @@ model name                   &specifications\\
 \midrule
 \texttt{Seq2Seq} & 100 embedding, 100 hidden, no dropout\\
 \texttt{Seq2SeqAttn} & Bi-directional LSTM, 100 embedding, 100 hidden, no dropout\\
-\texttt{Megatron}         &  \\
 \bottomrule
 \end{tabular}
     \caption{Both models used only one layer in the decoder and trained with Adam and learning rate $10^{-3}$ over 10 epochs. For \texttt{Seq2Seq}, decrease in validation loss flattened at epoch 8. For \texttt{Seq2SeqAttn}, training stopped at epoch 7 after loss starting going up.}
