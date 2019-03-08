@@ -84,6 +84,57 @@ Beam search is proposed based on this idea. Instead of selecting the MLE, we sel
 \end{align}
 In the last step we choose the top $k$ to report as results.
 
+
+\subsection{Transformer extension}
+We also implemented the \emph{transformer} architecture, following 
+\cite{vaswani2017attention}. Each transformer layer is a self-attention
+layer,\footnote{The attention layers are \emph{multiheaded}, which means that
+we transform the (query, key, value) inputs by a linear layer before using
+dot-product attention (and normalization by $\sqrt{d}$. We then concatenate
+the resulting context vectors and feed into one last linear layer).} a
+source-attention layer (only in the decoder), and a fully-connected feedforward
+network, connected by residual connections\footnote{A residual
+connection of a layer adds the input to the layer output. This helps with
+gradient propagation} and layer normalization.\footnote{Layer normalization
+standardizes a layer's output along dimension of the dense embedding (i.e.
+the dimension other than the batch and seqlen dimensions).} We
+transform
+the input via a dense embedding and a \emph{positional embedding}---treating
+position in a sentence as tokens in a vocabulary, and map to a dense embedding.
+We concatenate the embeddings and feed into the transformer layers. The model
+architecture is diagramed in \Cref{fig:transformer}. 
+
+We trained two transformer models, which we name \texttt{Megatron} and 
+\texttt{Soundwave}, after beloved \emph{Transformers} antagonists. The 
+\texttt{size} parameter is the number of dimensions of the dense embeddings,
+input to layers, and output from layers (so that the layers plug into each
+other). The \texttt{pos, emb} parameters are the number of dimensions in the
+positional and the word embedding 
+\begin{figure}[tb]
+	\centering
+	\includegraphics[width=\textwidth]{figs/transformer.png}
+	\caption{Diagram in \cite{vaswani2017attention}}
+	\label{fig:transformer}
+\end{figure}
+
+\begin{verbatim}
+# Megatron
+size = 200
+pos = 20
+emb = 180
+head = 4
+nlayers = 3
+dropout = .2
+
+# Soundwave
+size = 200
+pos = 20
+emb = 180
+head = 3
+nlayers = 4
+dropout = .1
+\end{verbatim}
+
 \section{Experiments}
 We trained two models and document hyperparameters in Table \ref{tab:spec}. Results are displayed in Table \ref{table:performance}. The performance of the Sequence-to-Sequence model in \cite{sutskever2014sequence} is reasonable, but understandabely weaker due to its simple structure of combining two LSTMs without any attention layer applied to the source sentence.
 
