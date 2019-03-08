@@ -138,7 +138,29 @@ dropout = .1
 \section{Experiments}
 We trained two models and document hyperparameters in Table \ref{tab:spec}. Results are displayed in Table \ref{table:performance}. The performance of the Sequence-to-Sequence model in \cite{sutskever2014sequence} is reasonable, but understandabely weaker due to its simple structure of combining two LSTMs without any attention layer applied to the source sentence.
 
-In the attention model proposed in \cite{vaswani2017attention}, we used $1/5$ of the number of parameters compared to the paper due to the constraint of training speed. The main difference is that instead of a 5-layer decoder, we used one layer. Compared to the previous Sequence-to-Sequence model without attention, the performance improved significantly as seen in Table \ref{table:performance}. We experimented normalizing the log-attention weights by factor of $\sqrt{\textrm{embedding size}}$ before proceeding to the softmax function to calculate the attention weights. However, this resulted in uniform weights across all source words and very poor performance. In the properly trained model, we can observe the attention weights reflecting our intuition. See Figure \ref{fig:word_weights} and \ref{fig:mat_weights} for visualization of the attention weights. 
+In the attention model proposed in \cite{bahdanau2014neural}, we used $1/5$ of
+the number of parameters compared to the paper due to the constraint of training
+speed. The main difference is that instead of a 5-layer decoder, we used one
+layer. Compared to the previous Sequence-to-Sequence model without attention,
+the performance improved significantly as seen in Table \ref{table:performance}.
+We experimented normalizing the log-attention weights by factor of $\sqrt{
+\textrm{embedding size}}$ before proceeding to the softmax function to calculate
+the attention weights; this is because with more dimensions, dot product tends
+to be larger, and the softmax tends to be sharper, which would result in small
+gradients. However, this resulted in uniform weights across all source words and
+very poor performance. In the properly trained model, we can observe the attention weights reflecting our intuition. See Figure \ref{fig:word_weights} and \ref{fig:mat_weights} for visualization of the attention weights.
+
+It is also somewhat surprising to us that transformer model in 
+\cite{vaswani2017attention} does not perform well relative to LSTM-based models,
+contradicting established wisdom. We suspect that the reason is due to either
+poor implementation/optimization or short sentences and insufficient computing
+power. Attention is powerful when sentences are long, since it allows the model
+to look at arbitrarily long dependencies, and attention scales well with GPU
+hardware and multi-GPU training---we would get neither of these advantages with
+a small dataset and
+Google Colab computing power (Training \texttt{Megatron} takes 15 minutes per
+epoch and training \texttt{Soundwave} takes over 20 minutes, which does not
+leave room for hyperparameter tuning).
 
 \begin{figure}
 	\centering
@@ -180,6 +202,8 @@ model name                             &       &        & \\
 \midrule
 \texttt{Seq2Seq}                      & 3.23 & 25.36  & 6.32 \\
 \texttt{Seq2SeqAttn}                      & 2.71 & 15.05  & 17.77 \\
+\texttt{Megatron} & 2.7 & 15 & 9.68 \\
+\texttt{Soundwave} & 2.8 & 16 & 7.08\\
 \bottomrule
 \end{tabular}
 \caption{Performance metrics for different models}
@@ -197,5 +221,21 @@ model name                             &       &        & \\
 \lstinputlisting[caption=LSTM decoder]{models/lstm_decoder.py}
 \lstinputlisting[caption=Attention]{models/attention.py}
 \lstinputlisting[caption=Beam search]{models/beam.py}
+
+\subsection{Transformer implementation}
+\lstinputlisting[caption=Encoder Layer]{models/transformer_encoder_layer.py}
+\lstinputlisting[caption=Decoder Layer]{models/transformer_decoder_layer.py}
+\lstinputlisting[caption=Encoder]{models/transformer_encoder.py}
+\lstinputlisting[caption=Decoder]{models/transformer_decoder.py}
+\lstinputlisting[caption=Sublayer connection]{models/sublayer_connection.py}
+\lstinputlisting[caption=Multihead Attention]{models/multihead_attention.py}
+\lstinputlisting[caption=Self-attention]{models/self_attention.py}
+\lstinputlisting[caption=Layer norm]{models/layernorm.py}
+
+
+
+
+
+
 
 \end{document}
