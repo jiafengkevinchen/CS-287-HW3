@@ -87,6 +87,21 @@ And in the last step we choose the top $k$ to report as results based on given t
 
 \section{Experiments}
 
+\subsection{Attention Weights Visualization}
+\begin{figure}
+	\centering
+	\includegraphics[width=.8\linewidth]{figs/attn1.png}
+	\includegraphics[width=.8\linewidth]{figs/attn2.png}
+	\includegraphics[width=.8\linewidth]{figs/attn3.png}
+	\caption{Visualization of attention}
+\end{figure}
+
+\begin{figure}
+	\centering
+	\includegraphics[width=.8\linewidth]{figs/attn_mat.png}
+	\caption{Visualization of attention matrix weights}
+\end{figure}
+
 \begin{landscape}
 \begin{table}[tb]
     
@@ -100,14 +115,7 @@ model name                   &specifications\\
 \texttt{Megatron}         &  \\
 \bottomrule
 \end{tabular}
-    \caption{Both models are one-layer (we experimented with two layers and dropout, but did
-    not achieve gains; this is consistent with the literature on LSTM and Penn tree bank dataset). All models are trained with Adam and learning rate
-    $10^{-3}$ over 3 epochs (which is usually when validation error starts to
-    increase). The trigram probabilities are somewhat arbitrarily chosen: We
-    initially trained the trigram weights over the training set and observe
-    that the gradient direction is always in the direction of increasing the
-    weight for the trigram term, $\alpha_3$; we then decided to use a $0.9,
-    0.05,0.05$ split, putting most weight on trigrams.}
+    \caption{Both models used only one layer in the decoder and trained with Adam and learning rate $10^{-3}$ over 10 epochs. For \texttt{Seq2Seq}, decrease in validation loss flattened at epoch 8. For \texttt{Seq2SeqAttn}, training stopped at epoch 7 after loss starting going up.}
     \label{tab:spec}
 \end{table}
 \begin{table}[h]
@@ -117,7 +125,7 @@ model name                   &specifications\\
 {}                                     & Loss  & Perplexity & BLEU \\
 model name                             &       &        & \\
 \midrule
-\texttt{Seq2Seq}                      & 2.71 & 15.05  & 17.77 \\
+\texttt{Seq2Seq}                      & 3.23 & 25.36  & 6.32 \\
 \texttt{Seq2SeqAttn}                      & 2.71 & 15.05  & 17.77 \\
 \bottomrule
 \end{tabular}
